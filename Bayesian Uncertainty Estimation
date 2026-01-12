@@ -1,0 +1,24 @@
+import tensorflow as tf
+from tensorflow.keras import layers
+
+class BayesianDense(layers.Layer):
+    def __init__(self, units, activation=None):
+        super().__init__()
+        self.units = units
+        self.activation = tf.keras.activations.get(activation)
+
+    def build(self, input_shape):
+        self.w_mu = self.add_weight(
+            shape=(input_shape[-1], self.units),
+            initializer="glorot_uniform"
+        )
+        self.w_logvar = self.add_weight(
+            shape=(input_shape[-1], self.units),
+            initializer="zeros"
+        )
+
+    def call(self, inputs, training=True):
+        epsilon = tf.random.normal(tf.shape(self.w_mu))
+        weights = self.w_mu + tf.exp(0.5 * self.w_logvar) * epsilon
+        output = tf.matmul(inputs, weights)
+        return self.activation(output) if self.activation else output

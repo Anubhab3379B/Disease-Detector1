@@ -1,0 +1,36 @@
+import tensorflow as tf
+from tensorflow.keras import layers, Model
+
+class GraphConvolution(layers.Layer):
+    def __init__(self, units):
+        super().__init__()
+        self.units = units
+
+    def build(self, input_shape):
+        self.w = self.add_weight(
+            shape=(input_shape[-1], self.units),
+            initializer="glorot_uniform",
+            trainable=True
+        )
+
+    def call(self, inputs, adjacency):
+        x = tf.matmul(inputs, self.w)
+        return tf.matmul(adjacency, x)
+
+
+def build_gene_gnn(num_genes, feature_dim):
+    node_features = layers.Input(shape=(num_genes, feature_dim))
+    adjacency = layers.Input(shape=(num_genes, num_genes))
+
+    x = GraphConvolution(128)(node_features, adjacency)
+    x = layers.ReLU()(x)
+    x = GraphConvolution(64)(x, adjacency)
+
+    x = tf.reduce_mean(x, axis=1)
+    x = layers.Dense(64, activation="relu")(x)
+
+    return Model(
+        inputs=[node_features, adjacency],
+        outputs=x,
+        name="GeneInteractionGNN"
+    )

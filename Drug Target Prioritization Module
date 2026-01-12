@@ -1,0 +1,32 @@
+from tensorflow.keras import layers, Model
+
+def build_full_system(
+    genomic_model,
+    vision_model,
+    gene_gnn,
+    num_classes
+):
+    genomic_input = genomic_model.input
+    vision_input = vision_model.input
+    gnn_inputs = gene_gnn.input
+
+    genomic_feat = genomic_model.output
+    vision_feat = vision_model.output
+    gnn_feat = gene_gnn.output
+
+    fused = layers.Concatenate()([
+        genomic_feat,
+        vision_feat,
+        gnn_feat
+    ])
+
+    x = layers.Dense(256, activation="relu")(fused)
+    x = layers.Dropout(0.4)(x)
+
+    output = layers.Dense(num_classes, activation="softmax")(x)
+
+    return Model(
+        inputs=[genomic_input, vision_input, *gnn_inputs],
+        outputs=output,
+        name="StateOfTheArtGeneticDiseaseModel"
+    )

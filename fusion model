@@ -1,0 +1,4 @@
+from models.bayesian_layers import BayesianDense
+
+x = BayesianDense(256, activation="relu")(fused)
+x = BayesianDense(128, activation="relu")(x)
